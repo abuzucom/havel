@@ -1,0 +1,6 @@
+{
+  "activities": [
+    {"name": "Account", "fields": ["email"], "purpose": "delivery",
+     "recipients": [], "retention_days": 730, "basis": "contract"}
+  ]
+}

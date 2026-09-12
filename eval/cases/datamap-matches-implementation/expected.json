@@ -1,0 +1,11 @@
+{
+  "mode": "Data-map",
+  "declared_scope": "undeclared",
+  "expected_verdict": "ACCURACY: MATCH",
+  "expected_classes": [],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "The declared artifact and the implementation agree on fields, purposes, recipients, and retention. The pass condition is a match rather than a manufactured mismatch.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

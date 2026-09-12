@@ -1,0 +1,1 @@
+Adds a lifecycle hook that feeds this repository's own AGENTS.md back to its agent session as context.

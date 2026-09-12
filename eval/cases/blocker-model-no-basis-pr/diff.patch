@@ -1,0 +1,6 @@
+--- a/app/ai.py
++++ b/app/ai.py
+@@
++def index_all():
++    for person in db.people.all():
++        vectors.upsert(person.id, embed(person.to_dict()))

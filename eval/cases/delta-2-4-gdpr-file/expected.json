@@ -1,0 +1,18 @@
+{
+  "mode": "File",
+  "declared_scope": "eu",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.4",
+    "2.4@gdpr"
+  ],
+  "expected_regimes": [
+    "gdpr",
+    "eprivacy",
+    "eidas"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "The request takes a whole credential where a predicate proof exists. The declared scope eu brings gdpr into effect, so the [2.4@gdpr] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

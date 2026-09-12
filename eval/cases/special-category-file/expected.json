@@ -1,0 +1,13 @@
+{
+  "mode": "File",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK: CRITICAL",
+  "expected_classes": [
+    "2.5"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "Health data is written through the ordinary profile path with no elevated basis recorded. Scope is undeclared, so only baseline classes apply.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

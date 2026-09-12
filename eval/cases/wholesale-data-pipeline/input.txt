@@ -1,0 +1,7 @@
+# dags/nightly.py
+extract("SELECT * FROM customers")
+load("s3://analytics-raw/customers/")
+train_model("s3://analytics-raw/customers/")
+
+# dags/seed_staging.py
+copy_table("production.customers", "staging.customers")

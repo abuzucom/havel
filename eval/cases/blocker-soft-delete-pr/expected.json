@@ -1,0 +1,13 @@
+{
+  "mode": "PR",
+  "declared_scope": "undeclared",
+  "expected_verdict": "VERDICT: BLOCK",
+  "expected_classes": [
+    "2.7"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "notes": "Blocker 4. A soft delete reports success while the primary record survives. A section 5 blocker admits no discretion.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears.",
+  "expect_json": true
+}

@@ -1,0 +1,5 @@
+# Store text as LF in the repository. Shared files copied from
+# abuzucom/agents are tracked by a LF-normalized SHA-256 in
+# upstream-files.json; committing CRLF blobs would make every copied file
+# read as drift on a LF checkout.
+* text=lf

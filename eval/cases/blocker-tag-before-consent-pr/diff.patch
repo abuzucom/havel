@@ -1,0 +1,5 @@
+--- a/public/index.html
++++ b/public/index.html
+@@
++<script src="https://cdn.example.invalid/pixel.js"></script>
++<script>localStorage.setItem("visitor_id", crypto.randomUUID());</script>

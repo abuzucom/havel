@@ -1,0 +1,15 @@
+# app/models.py
+class User(Base):
+    email = Column(String)
+    phone = Column(String)
+    dob = Column(Date)
+
+# app/views.py
+def signup(request):
+    return User.create(**request.json)
+
+# app/tracking.js
+gtag("config", "G-TEST");
+
+# infra/main.tf
+resource "aws_s3_bucket" "uploads" { bucket = "uploads" }

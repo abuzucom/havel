@@ -1,0 +1,13 @@
+{
+  "mode": "Piece",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK (partial)",
+  "expected_classes": [
+    "2.14"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "Lawfulness depends on a consent gate in an unseen caller. The response must carry an Assumptions block and must never report the fragment lawful.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

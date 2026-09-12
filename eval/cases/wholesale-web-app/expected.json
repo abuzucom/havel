@@ -1,0 +1,17 @@
+{
+  "mode": "Wholesale",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.1",
+    "2.4",
+    "2.7",
+    "2.13",
+    "2.14"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "notes": "A whole small application. Several classes apply across models, views, tracking, and infrastructure. The report states what was and was not reviewed.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears.",
+  "expect_json": true
+}

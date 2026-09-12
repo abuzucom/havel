@@ -1,0 +1,16 @@
+{
+  "mode": "File",
+  "declared_scope": "us-ca",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.12",
+    "2.12@ccpa"
+  ],
+  "expected_regimes": [
+    "ccpa"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "A recipient carries a service-provider label with no restricting contract term. The declared scope us-ca brings ccpa into effect, so the [2.12@ccpa] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

@@ -1,0 +1,17 @@
+{
+  "mode": "File",
+  "declared_scope": "canada",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.21",
+    "2.21@pipeda"
+  ],
+  "expected_regimes": [
+    "pipeda",
+    "law25"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "Personal-data reads leave no record supporting scope determination. The declared scope canada brings pipeda into effect, so the [2.21@pipeda] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

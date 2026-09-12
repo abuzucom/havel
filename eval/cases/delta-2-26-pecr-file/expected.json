@@ -1,0 +1,17 @@
+{
+  "mode": "File",
+  "declared_scope": "uk",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.26",
+    "2.26@pecr"
+  ],
+  "expected_regimes": [
+    "uk-gdpr",
+    "pecr"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "Marketing sends with no validated confirmation step. The declared scope uk brings pecr into effect, so the [2.26@pecr] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

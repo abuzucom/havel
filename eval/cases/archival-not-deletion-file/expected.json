@@ -1,0 +1,13 @@
+{
+  "mode": "File",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.7"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "This control fires rather than staying silent. An archival pipeline changes the storage tier and leaves the retention question untouched. Crediting the pipeline as a retention control would violate the trace-to-effect principle.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

@@ -1,0 +1,12 @@
+{
+  "mode": "File",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.1"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "No declared_scope key and no operator statement. A single-turn harness cannot assert the ask branch directly, so the condition is weaker. The response either asks which regimes apply or takes the undeclared branch. Applying a regime silently fails.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

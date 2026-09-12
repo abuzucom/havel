@@ -1,0 +1,6 @@
+--- a/app/api.py
++++ b/app/api.py
+@@
++def handler(request):
++    log.info("request %s", request.json)
++    return process(request)

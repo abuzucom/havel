@@ -1,0 +1,13 @@
+{
+  "mode": "File",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK: MEDIUM",
+  "expected_classes": [
+    "2.23"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "Data-handling packages float to unpinned versions and a fingerprinting dependency is present with no declared behavior. Scope is undeclared, so only baseline classes apply.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

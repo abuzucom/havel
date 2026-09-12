@@ -1,0 +1,15 @@
+{
+  "mode": "File",
+  "declared_scope": "eu",
+  "expected_verdict": "RISK: NONE-FOUND",
+  "expected_classes": [],
+  "expected_regimes": [
+    "gdpr",
+    "eprivacy",
+    "eidas"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "The existing-customer exception permits this. An opt-out appeared at collection and appears in the message. Section 8 forbids flagging the absence of a fresh consent record on its own.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

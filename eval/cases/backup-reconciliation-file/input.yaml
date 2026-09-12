@@ -1,0 +1,9 @@
+backups:
+  schedule: "0 3 * * *"
+  retention_days: 35
+  restore:
+    suppression_list: deletions_since_snapshot
+    apply_on_restore: true
+deletions:
+  ledger: deletion_requests
+  retain_ledger_days: 400

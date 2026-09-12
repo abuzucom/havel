@@ -1,0 +1,11 @@
+{
+  "mode": "PR",
+  "declared_scope": "undeclared",
+  "expected_verdict": "VERDICT: APPROVE",
+  "expected_classes": [],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "A hook delivering a repository-controlled policy file through the trusted channel is not untrusted content entering it. The pass condition is a clean verdict with no fabricated citation.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

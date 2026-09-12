@@ -1,0 +1,7 @@
+--- a/web/banner.tsx
++++ b/web/banner.tsx
+@@
++const onDismiss = () => {
++  recordConsent({ analytics: true, marketing: true });
++  hideBanner();
++};

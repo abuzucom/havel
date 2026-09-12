@@ -1,0 +1,15 @@
+{
+  "mode": "Wholesale",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.3",
+    "2.17",
+    "2.28"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "notes": "A pipeline reusing operational data for training and seeding staging from production. The report states what was and was not reviewed.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears.",
+  "expect_json": true
+}

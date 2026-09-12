@@ -1,0 +1,14 @@
+{
+  "mode": "File",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.1",
+    "2.7"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "The most important control. Strong EU signals are planted and the scope is undeclared. Baseline findings apply. Every regime-conditional finding is NEEDS-HUMAN. No GDPR finding may appear. This proves the audit infers no regime from a signal.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

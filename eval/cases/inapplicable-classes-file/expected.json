@@ -1,0 +1,11 @@
+{
+  "mode": "File",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK: NONE-FOUND",
+  "expected_classes": [],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "No personal data reaches this unit. Step 0 rules every class out. The pass condition names the classes as out of scope rather than reviewed and clean.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

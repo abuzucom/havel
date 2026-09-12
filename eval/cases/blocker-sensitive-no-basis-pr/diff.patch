@@ -1,0 +1,5 @@
+--- a/app/intake.py
++++ b/app/intake.py
+@@
++def store_biometric(user_id, template):
++    return db.biometrics.insert({"user_id": user_id, "template": template})

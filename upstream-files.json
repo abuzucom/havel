@@ -1,0 +1,32 @@
+{
+  "agents_commit": "e6ddde181b60b23c542c064152ceaf2be6fa5ba3",
+  "agents_repo": "abuzucom/agents",
+  "files": {
+    "hooks/_bash_parser.py": "082d48b1565f28f13a954efd123471266d4a3bfaecbbc58fd078d304e339961d",
+    "hooks/_cmd_parser.py": "4212670bc4166a5f89be120ceb6bafbc854d16743ff900f4b596b7b79fa5981b",
+    "hooks/_gate_core.py": "17cec041acc75e85deb4b22c2d517842d1f425acb442f52abce30d5db54ee82f",
+    "hooks/enforce_branch_name.py": "f75efbc7e88cf04b9eac24c6c0d7e1ffabeaf0623711083c58521b9894ce5f24",
+    "hooks/enforce_git_identity.py": "9439985a3c6a81dd48ffb629659294438894d38e7357ccf9bbd12e5c37cffe6e",
+    "scripts/check_ascii.py": "c2be41a7d4e6919e7f4f5ebdf225541c289b172dd0f9cbe112690958f4a2407a",
+    "scripts/check_branch_name.py": "f011e66f724f2ae4770eef8e5efb632e10a44db533b2dc0995f4684a6a89781f",
+    "scripts/check_english_only.py": "0358dc316c99a402b87c5a0c6c6932f02c895625f446401152551873a3114c08",
+    "scripts/check_git_identity.py": "37011aafca66ed55ed6f6498c59a597cbc2303dfa9fb10cf379c82a81589f033",
+    "scripts/check_hedging.py": "fb2d368e2fbf785419836c5e1ee23d980b0cbba9a68054a5a800c6025aba383d",
+    "scripts/check_us_spelling.py": "6c5fd1f98c76bb6614cd4bdcfa933e9d7fc246aebe418d87261c29d1c3ae27e9",
+    "scripts/handoff_policy.py": "8506e7175c2f1729e35644eedf7c3c97b9116518c019b8ae7bc802d8e5884d21",
+    "scripts/lint_style.py": "53f46e2a016575e853910abb3a0a97a46939b503060255197511c18b6a572514",
+    "scripts/prose_bans.txt": "66b5dbca3a3e8238ff7af969a4ac458802aa6e431be7d533df4c926fa16d553d",
+    "scripts/prose_policy.py": "e525ef1491c2e3b6b9ac5c1509eb8b291bc2dd41bcc1804b0155161ba345f256",
+    "scripts/read_git_state.py": "40d1c2eb96eb12fae50d0d010df7c4c1ac0361a9cd69e1c8ff9225109d85cde1",
+    "scripts/trusted_gh.py": "362fef63cd9fca04a18ecee366877f188952bc07268d0c3aa90687396de86c04",
+    "scripts/trusted_git.py": "92d96209122407eb5d4d25433fe03f81b0c1d52567df2899d9ae39c03390f1e9",
+    "tests/json_line_worker.py": "57cbf9ed4c57506201e9c9e4ae57d6b8a330d5ede2f8fb76f0c4f72dae55fc0b",
+    "tests/json_line_worker_child.py": "bad155acd0f37cf37e0ed12ac6c35755a27b987a541977c48d52076912d0e83c",
+    "tests/persistent_main_worker.py": "6f1eea3418bdf70ac7f87bb3699fee9315c8183b0bb625f553f0fe469c0232dc",
+    "tests/retrying_temp_directory.py": "75937fbb967d00250e90f29aa030b56e24d1a7931c7f61e31be265a5128f9fb1",
+    "tests/test_enforce_branch_name.py": "9e14bf60de16d618c8e6aa721a0640cfd51d095f076f1a3bddf904e2d9208a5c",
+    "tests/test_enforce_git_identity.py": "7410134f1f2c01f3a11fe38cbaac2b04b3fc30675c83d3db75f8cd1309a014a6",
+    "tests/test_trusted_gh.py": "6ec79474546c009e2701afeafa9d7437a07aa4026e3302373a0f51cfb0d5ddea",
+    "tests/test_trusted_git_state.py": "9c22889d12f6b3c890cc6889d5b87eb1ab6a719453bf3c2ef0b9a15d3d4fd75e"
+  }
+}

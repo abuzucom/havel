@@ -1,0 +1,16 @@
+{
+  "mode": "File",
+  "declared_scope": "us-va",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.8",
+    "2.8@vcdpa"
+  ],
+  "expected_regimes": [
+    "vcdpa"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "A rights request is refused with no appeal or propagation path. The declared scope us-va brings vcdpa into effect, so the [2.8@vcdpa] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

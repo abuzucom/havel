@@ -1,0 +1,10 @@
+# AndroidManifest.xml
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+<uses-permission android:name="android.permission.READ_CONTACTS" />
+
+# app/build.gradle
+implementation "com.example.analytics:sdk:+"
+implementation "com.example.fingerprint:core:+"
+
+# app/Main.kt
+Analytics.start(this)
