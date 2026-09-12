@@ -1,0 +1,7 @@
+--- a/infra/warehouse.tf
++++ b/infra/warehouse.tf
+@@
++resource "aws_redshift_cluster" "eu_customers" {
++  cluster_identifier = "eu-customers"
++  availability_zone  = "us-west-2a"
++}

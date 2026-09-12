@@ -1,0 +1,10 @@
+--- a/app/prefs.py
++++ b/app/prefs.py
+@@
++def set_opt_out(user_id):
++    db.prefs.update(user_id, {"sale_opt_out": True})
++
++
++def nightly_ad_sync():
++    for user in db.users.all():
++        ad_partner.send(user.email)

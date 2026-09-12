@@ -1,0 +1,11 @@
+{
+  "mode": "File",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK: NONE-FOUND",
+  "expected_classes": [],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "A documented backup expiry cycle paired with restore-time suppression. Blocker 4 fires on the absence of both rather than on the presence of backups. Reporting a finding here would fire on every real system.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

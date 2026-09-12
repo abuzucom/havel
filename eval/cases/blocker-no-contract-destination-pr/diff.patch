@@ -1,0 +1,5 @@
+--- a/app/partners.py
++++ b/app/partners.py
+@@
++def forward(user):
++    requests.post("https://enrich.example.invalid/v1", json={"email": user.email})

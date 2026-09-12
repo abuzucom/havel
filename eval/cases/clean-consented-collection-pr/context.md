@@ -1,0 +1,1 @@
+Adds account creation. The signup page links the privacy notice above the submit control. Retention and deletion are covered by the existing scheduled sweep.

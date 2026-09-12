@@ -1,0 +1,11 @@
+services:
+  api:
+    environment:
+      DATABASE_URL: postgres://app_admin:secret@db:5432/production
+  worker:
+    environment:
+      DATABASE_URL: postgres://app_admin:secret@db:5432/production
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_INITDB_ARGS: ""

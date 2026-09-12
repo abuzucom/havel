@@ -1,0 +1,15 @@
+{
+  "mode": "File",
+  "declared_scope": "us-ut",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.18"
+  ],
+  "expected_regimes": [
+    "ucpa"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "Profiling with no opt-out is a baseline 2.18 finding. Utah adds no profiling opt-out, so no [2.18@ucpa] token may appear. This guards the does-not-add mechanism against a manufactured finding.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

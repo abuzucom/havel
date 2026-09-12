@@ -1,0 +1,6 @@
+{
+  "activities": [
+    {"name": "SMS reminders", "fields": ["phone"], "purpose": "reminders",
+     "recipients": ["sms_vendor"], "retention_days": 90, "basis": "consent"}
+  ]
+}

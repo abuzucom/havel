@@ -1,0 +1,22 @@
+--- a/app/signup.py
++++ b/app/signup.py
+@@ -1,3 +1,20 @@
++NOTICE_VERSION = "2026-02-01"
++
++
++def create_account(form, consent):
++    """Create an account with a recorded basis and provable consent."""
++    account = db.accounts.insert({
++        "email": form["email"],
++        "basis": "contract",
++        "retention_days": 730,
++    })
++    for purpose in ("analytics", "marketing"):
++        if consent.granted(purpose):
++            db.consents.insert({
++                "subject": account.id,
++                "purpose": purpose,
++                "granted_at": now(),
++                "notice_version": NOTICE_VERSION,
++            })
++    return account

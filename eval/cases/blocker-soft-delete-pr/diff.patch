@@ -1,0 +1,6 @@
+--- a/app/accounts.py
++++ b/app/accounts.py
+@@
++def delete_account(user_id):
++    db.users.update(user_id, {"deleted_at": now()})
++    return {"deleted": True}

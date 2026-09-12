@@ -1,0 +1,6 @@
+{
+  "activities": [
+    {"name": "Analytics", "fields": ["session_id"], "purpose": "product",
+     "recipients": [], "retention_days": 90, "basis": "legitimate_interest"}
+  ]
+}

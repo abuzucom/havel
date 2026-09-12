@@ -1,0 +1,13 @@
+--- a/hooks/reinject_policy.py
++++ b/hooks/reinject_policy.py
+@@ -0,0 +1,12 @@
++"""Emit the repository policy file as lifecycle context."""
++import pathlib
++
++POLICY = pathlib.Path(__file__).resolve().parent.parent / "AGENTS.md"
++
++
++def main() -> int:
++    print("The following repository policy is binding for this session.")
++    print(POLICY.read_text(encoding="utf-8"))
++    return 0

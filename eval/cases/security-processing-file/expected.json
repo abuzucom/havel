@@ -1,0 +1,13 @@
+{
+  "mode": "File",
+  "declared_scope": "undeclared",
+  "expected_verdict": "RISK: HIGH",
+  "expected_classes": [
+    "2.20"
+  ],
+  "expected_regimes": [],
+  "expected_regime_source": "undeclared",
+  "expect_json": true,
+  "notes": "Every service shares one full-access database credential and the store configures no encryption at rest. Scope is undeclared, so only baseline classes apply.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

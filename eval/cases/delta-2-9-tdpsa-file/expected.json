@@ -1,0 +1,16 @@
+{
+  "mode": "File",
+  "declared_scope": "us-tx",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.9",
+    "2.9@tdpsa"
+  ],
+  "expected_regimes": [
+    "tdpsa"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "Personal data reaches an advertising recipient with no opt-out route. The declared scope us-tx brings tdpsa into effect, so the [2.9@tdpsa] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

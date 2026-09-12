@@ -1,0 +1,172 @@
+{
+  "all": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/regimes/gdpr.md",
+      "docs/regimes/eprivacy.md",
+      "docs/regimes/eidas.md",
+      "docs/regimes/de-national.md",
+      "docs/regimes/uk-gdpr.md",
+      "docs/regimes/pecr.md",
+      "docs/regimes/ccpa.md",
+      "docs/regimes/tdpsa.md",
+      "docs/regimes/vcdpa.md",
+      "docs/regimes/cpa.md",
+      "docs/regimes/ctdpa.md",
+      "docs/regimes/ucpa.md",
+      "docs/regimes/pipeda.md",
+      "docs/regimes/lgpd.md",
+      "docs/regimes/law25.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/regimes/gdpr.md",
+      "docs/regimes/eprivacy.md",
+      "docs/regimes/eidas.md",
+      "docs/regimes/de-national.md",
+      "docs/regimes/uk-gdpr.md",
+      "docs/regimes/pecr.md",
+      "docs/regimes/ccpa.md",
+      "docs/regimes/tdpsa.md",
+      "docs/regimes/vcdpa.md",
+      "docs/regimes/cpa.md",
+      "docs/regimes/ctdpa.md",
+      "docs/regimes/ucpa.md",
+      "docs/regimes/pipeda.md",
+      "docs/regimes/lgpd.md",
+      "docs/regimes/law25.md",
+      "docs/scope-boundary.md"
+    ]
+  },
+  "baseline": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/scope-boundary.md"
+    ]
+  },
+  "brazil": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/regimes/lgpd.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/regimes/lgpd.md",
+      "docs/scope-boundary.md"
+    ]
+  },
+  "canada": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/regimes/pipeda.md",
+      "docs/regimes/law25.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/regimes/pipeda.md",
+      "docs/regimes/law25.md",
+      "docs/scope-boundary.md"
+    ]
+  },
+  "de": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/regimes/gdpr.md",
+      "docs/regimes/eprivacy.md",
+      "docs/regimes/eidas.md",
+      "docs/regimes/de-national.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/regimes/gdpr.md",
+      "docs/regimes/eprivacy.md",
+      "docs/regimes/eidas.md",
+      "docs/regimes/de-national.md",
+      "docs/scope-boundary.md"
+    ]
+  },
+  "eu": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/regimes/gdpr.md",
+      "docs/regimes/eprivacy.md",
+      "docs/regimes/eidas.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/regimes/gdpr.md",
+      "docs/regimes/eprivacy.md",
+      "docs/regimes/eidas.md",
+      "docs/scope-boundary.md"
+    ]
+  },
+  "uk": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/regimes/uk-gdpr.md",
+      "docs/regimes/pecr.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/regimes/uk-gdpr.md",
+      "docs/regimes/pecr.md",
+      "docs/scope-boundary.md"
+    ]
+  },
+  "us": {
+    "full": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/checks/*.md",
+      "docs/regimes/ccpa.md",
+      "docs/regimes/tdpsa.md",
+      "docs/regimes/vcdpa.md",
+      "docs/regimes/cpa.md",
+      "docs/regimes/ctdpa.md",
+      "docs/regimes/ucpa.md",
+      "docs/scope-boundary.md"
+    ],
+    "standard": [
+      "AUDIT.md",
+      "docs/regimes/scope-profiles.md",
+      "docs/regimes/ccpa.md",
+      "docs/regimes/tdpsa.md",
+      "docs/regimes/vcdpa.md",
+      "docs/regimes/cpa.md",
+      "docs/regimes/ctdpa.md",
+      "docs/regimes/ucpa.md",
+      "docs/scope-boundary.md"
+    ]
+  }
+}

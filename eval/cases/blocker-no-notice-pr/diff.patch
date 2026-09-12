@@ -1,0 +1,6 @@
+--- a/app/landing.tsx
++++ b/app/landing.tsx
+@@
++export const Capture = () => (
++  <form action="/api/lead"><input name="email" /><button>Send</button></form>
++);

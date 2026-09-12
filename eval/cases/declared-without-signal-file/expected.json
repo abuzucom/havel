@@ -1,0 +1,18 @@
+{
+  "mode": "File",
+  "declared_scope": "eu",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.1",
+    "2.1@gdpr"
+  ],
+  "expected_regimes": [
+    "gdpr",
+    "eprivacy",
+    "eidas"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "The mirror control. No EU signal appears anywhere and the scope declares eu. GDPR deltas apply in full. The response must not argue the declaration looks wrong.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

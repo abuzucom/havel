@@ -1,0 +1,1 @@
+The collection form offered a marketing opt-out at the point of purchase. Every message carries the unsubscribe link shown here.

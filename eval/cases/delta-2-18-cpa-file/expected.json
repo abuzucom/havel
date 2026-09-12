@@ -1,0 +1,16 @@
+{
+  "mode": "File",
+  "declared_scope": "us-co",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.18",
+    "2.18@cpa"
+  ],
+  "expected_regimes": [
+    "cpa"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "A significant automated decision runs with no human path and no opt-out. The declared scope us-co brings cpa into effect, so the [2.18@cpa] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}

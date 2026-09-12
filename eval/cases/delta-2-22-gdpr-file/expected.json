@@ -1,0 +1,18 @@
+{
+  "mode": "File",
+  "declared_scope": "eu",
+  "expected_verdict": "RISK:",
+  "expected_classes": [
+    "2.22",
+    "2.22@gdpr"
+  ],
+  "expected_regimes": [
+    "gdpr",
+    "eprivacy",
+    "eidas"
+  ],
+  "expected_regime_source": "declared",
+  "expect_json": true,
+  "notes": "Systematic profiling proceeds with no documented assessment. The declared scope eu brings gdpr into effect, so the [2.22@gdpr] delta applies on top of the baseline class.",
+  "fixture_notes": "All names, addresses, identifiers, and record content are synthetic and freshly invented for this fixture. No real person's data appears."
+}
