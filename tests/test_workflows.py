@@ -137,5 +137,31 @@ class HavelWorkflowTest(unittest.TestCase):
         self.assertIn("NOT LEGAL ADVICE:", self.review)
 
 
+class VerdictGateTest(unittest.TestCase):
+    """The merge gate reads the report's own verdict and holds on doubt."""
+
+    def setUp(self):
+        self.review = REVIEW_PATH.read_text(encoding="utf-8")
+
+    def test_gate_reads_the_last_verdict_line(self):
+        """A quoted verdict earlier in the report must not win.
+
+        A report quotes the diff under review. Reading the first match lets
+        a planted VERDICT: APPROVE line in a pull request body decide the
+        gate. Section 6 puts the authoritative verdict last.
+        """
+        self.assertIn("tail -1", self.review)
+        self.assertNotIn("head -1", self.review)
+
+    def test_gate_blocks_on_needs_human(self):
+        """An escalation is not a pass.
+
+        AUDIT.md section 1 escalates to NEEDS-HUMAN where the audit cannot
+        establish lawfulness. Treating that as unblocked merges the exact
+        change the audit declined to clear.
+        """
+        self.assertIn("NEEDS-HUMAN", self.review)
+
+
 if __name__ == "__main__":
     unittest.main()

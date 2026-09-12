@@ -70,6 +70,10 @@ def _sort_key(path: pathlib.Path):
 
 def resolve_sources(root: pathlib.Path, patterns) -> list:
     """Return the source files a pattern list names, in deterministic order."""
+    # relative_to compares path text rather than filesystem identity, so an
+    # unnormalized root makes every sound source read as one escaping the
+    # root. Normalize before any comparison.
+    root = root.resolve()
     resolved = []
     seen = set()
     for pattern in patterns:
@@ -145,8 +149,12 @@ def render(root: pathlib.Path, scope: str, tier: str, manifest: dict,
             f"tier '{tier}' is unknown. Use one of {', '.join(TIERS)}.")
     if cache is None:
         cache = {}
+    root = root.resolve()
     sources = resolve_sources(root, manifest[scope][tier])
-    names = [str(path.relative_to(root)) for path in sources]
+    # as_posix keeps the separator forward-slashed on every platform. str()
+    # yields backslashes on Windows, so a rebuild there would change every
+    # header line and report the whole tree stale.
+    names = [path.relative_to(root).as_posix() for path in sources]
     parts = [_header(scope, tier, names)]
     for path in sources:
         if path not in cache:

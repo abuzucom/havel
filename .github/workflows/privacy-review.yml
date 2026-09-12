@@ -53,7 +53,7 @@ on:
         type: boolean
         default: true
       fail_on_block:
-        description: "Fail the job when the response's VERDICT line is BLOCK."
+        description: "Fail the job when the response's verdict line is BLOCK or NEEDS-HUMAN."
         required: false
         type: boolean
         default: true
@@ -115,7 +115,12 @@ jobs:
           FAIL_ON_BLOCK: ${{ inputs.fail_on_block }}
         run: |
           set -euo pipefail
-          line="$(grep -E '^(VERDICT|RISK(\s\(partial\))?|ACCURACY):' response.txt | head -1 || true)"
+          # The report quotes the pull request title, body, and diff, all of
+          # which an author controls. A planted VERDICT: APPROVE line reaching
+          # column zero in a quoted block would decide the gate if the first
+          # match won. Section 6 puts the authoritative verdict last, so read
+          # the final match.
+          line="$(grep -E '^(VERDICT|RISK(\s\(partial\))?|ACCURACY):' response.txt | tail -1 || true)"
           if [ -z "$line" ]; then
             echo "No VERDICT:/RISK:/ACCURACY: line found in response." >&2
             exit 1
@@ -134,7 +139,11 @@ jobs:
             echo "$line"
             echo "$delimiter"
           } >> "$GITHUB_OUTPUT"
-          if [ "$FAIL_ON_BLOCK" = "true" ] && printf '%s' "$line" | grep -q 'BLOCK'; then
+          # NEEDS-HUMAN is the section 1 escalation for an audit that cannot
+          # establish lawfulness. Passing it green merges the change the audit
+          # declined to clear, so the gate holds on it as it holds on BLOCK.
+          if [ "$FAIL_ON_BLOCK" = "true" ] \
+              && printf '%s' "$line" | grep -qE 'BLOCK|NEEDS-HUMAN'; then
             echo "blocked=true" >> "$GITHUB_OUTPUT"
           else
             echo "blocked=false" >> "$GITHUB_OUTPUT"
@@ -162,7 +171,7 @@ jobs:
               body,
             });
 
-      - name: Fail on BLOCK
+      - name: Fail on a blocking verdict
         if: ${{ steps.verdict.outputs.blocked == 'true' }}
         env:
           VERDICT_LINE: ${{ steps.verdict.outputs.line }}

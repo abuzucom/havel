@@ -62,7 +62,7 @@ DELTA_TOKEN_RE = re.compile(r"^(2\.\d+)@([a-z0-9-]+)$")
 VERDICT_LINE_RE = re.compile(
     r"^(VERDICT|RISK(?: \(partial\))?|ACCURACY):\s*(.+)$", re.MULTILINE
 )
-VERDICT_JSON_RE = re.compile(r"VERDICT_JSON:\s*(\{.*\})", re.DOTALL)
+VERDICT_JSON_PREFIX = "VERDICT_JSON:"
 
 
 class CaseError(Exception):
@@ -210,9 +210,13 @@ def discover_cases(only: str | None = None) -> list[dict]:
 
 
 def verdict_matches(expected_verdict: str, response_text: str) -> tuple[bool, str]:
-    match = VERDICT_LINE_RE.search(response_text)
-    if not match:
+    # A report quotes the diff under review, and a diff is attacker
+    # controlled. Section 6 puts the authoritative verdict last, so read the
+    # final match rather than a quoted lookalike appearing earlier.
+    matches = list(VERDICT_LINE_RE.finditer(response_text))
+    if not matches:
         return False, "no VERDICT:/RISK:/ACCURACY: line found in response"
+    match = matches[-1]
     actual_line = f"{match.group(1)}: {match.group(2)}".strip()
     if expected_verdict in actual_line:
         return True, actual_line
@@ -220,11 +224,17 @@ def verdict_matches(expected_verdict: str, response_text: str) -> tuple[bool, st
 
 
 def json_companion_ok(response_text: str) -> tuple[bool, str]:
-    match = VERDICT_JSON_RE.search(response_text)
-    if not match:
+    prefix_at = response_text.rfind(VERDICT_JSON_PREFIX)
+    if prefix_at < 0:
         return False, "no VERDICT_JSON: block found"
+    brace_at = response_text.find("{", prefix_at)
+    if brace_at < 0:
+        return False, "VERDICT_JSON block carries no object"
+    # raw_decode reads one value and ignores whatever follows. A greedy regex
+    # instead runs to the last brace in the report, so the required trailing
+    # disclaimer or any later prose carrying a brace breaks the parse.
     try:
-        json.loads(match.group(1))
+        json.JSONDecoder().raw_decode(response_text, brace_at)
     except json.JSONDecodeError as exc:
         return False, f"VERDICT_JSON block did not parse: {exc}"
     return True, "VERDICT_JSON parsed"

@@ -117,6 +117,20 @@ class ResolutionTest(unittest.TestCase):
         with self.assertRaises(builder.BundleError):
             builder.resolve_sources(self.root, ["../outside.md"])
 
+    def test_unresolved_root_resolves_the_same_sources(self):
+        """An unresolved root must not read as a path escaping the root.
+
+        relative_to raises ValueError against an unnormalized root, and the
+        handler reports that as an escaping source. A caller passing a
+        relative or symlinked root then gets a security-shaped error for a
+        sound path.
+        """
+        unresolved = self.root / "docs" / ".."
+        self.assertEqual(
+            builder.resolve_sources(unresolved, ["docs/checks/*.md"]),
+            builder.resolve_sources(self.root, ["docs/checks/*.md"]),
+        )
+
 
 class RenderTest(unittest.TestCase):
     """Rendered bundles carry a header and every source section."""
@@ -131,6 +145,24 @@ class RenderTest(unittest.TestCase):
         text = builder.render(self.root, "eu", "standard", self.manifest)
         self.assertIn("eu", text.splitlines()[0])
         self.assertIn("standard", text)
+
+    def test_header_source_names_use_posix_separators(self):
+        """A rebuild on Windows must produce the same bytes.
+
+        str() on a relative path yields backslashes there, so every header
+        source name would differ and --check would report the whole tree
+        stale.
+        """
+        text = builder.render(self.root, "eu", "full", self.manifest)
+        header = text.split(builder.SEPARATOR, 1)[0]
+        self.assertIn("- `docs/checks/2.1.md`", header)
+        self.assertNotIn("\\", header)
+
+    def test_render_accepts_an_unresolved_root(self):
+        text = builder.render(self.root / "docs" / "..", "eu", "standard",
+                              self.manifest)
+        self.assertEqual(text, builder.render(self.root, "eu", "standard",
+                                              self.manifest))
 
     def test_header_carries_the_disclaimer(self):
         text = builder.render(self.root, "eu", "standard", self.manifest)

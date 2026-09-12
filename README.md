@@ -108,7 +108,8 @@ credential. Behavioral guarantees need a live run. See
 [`.github/workflows/privacy-review.yml`](.github/workflows/privacy-review.yml)
 is a reusable `workflow_call` reference implementation. It checks out a pull
 request diff, loads the prompt, runs an adopter-supplied model-call command,
-posts the report, and optionally fails on `BLOCK`. Havel ships no model
+posts the report, and optionally fails on `BLOCK` or `NEEDS-HUMAN`. An
+escalation is not a pass. Havel ships no model
 credential and no provider lock-in. Set the required `regimes` input once.
 Take the value from counsel's answer rather than from the codebase appearance.
 
