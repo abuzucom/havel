@@ -171,8 +171,14 @@ class VerdictReasonTest(unittest.TestCase):
             expected = json.loads(path.read_text(encoding="utf-8"))
             verdict = expected["expected_verdict"]
             token = run_eval.MODE_VERDICT_TOKENS[expected["mode"]]
-            severity = verdict.split(":", 1)[1].strip() if ":" in verdict else ""
-            line = f"{token}: {severity or 'HIGH'} - a reason mentioning APPROVE"
+            # A fixture stores either a bare severity or the token followed
+            # by an optional one. Recover the severity so the synthesized
+            # line is what that mode would really emit.
+            if verdict.startswith(token):
+                severity = verdict[len(token):].lstrip(":").strip() or "HIGH"
+            else:
+                severity = verdict
+            line = f"{token}: {severity} - a reason mentioning APPROVE BLOCK"
             matched, detail = run_eval.verdict_matches(
                 verdict, line, mode=expected["mode"])
             with self.subTest(case=path.parent.name):
