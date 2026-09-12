@@ -129,8 +129,17 @@ class HavelWorkflowTest(unittest.TestCase):
     def test_review_emits_the_declared_scope_line(self):
         self.assertIn("DECLARED_SCOPE:", self.review)
 
-    def test_review_greps_the_accuracy_token(self):
-        self.assertIn("ACCURACY", self.review)
+    def test_review_is_not_a_sibling_workflow(self):
+        """CONFORMANCE is adorno's design token. Havel audits privacy.
+
+        This once also asserted ACCURACY appears in the workflow, which held
+        while the gate grepped every mode's token. The gate now reads
+        VERDICT alone, so the only remaining occurrence is the comment
+        explaining that, and the assertion passed for the wrong reason.
+        VerdictGateTest.test_gate_reads_the_pr_mode_token_alone carries the
+        real contract, scoped to the grep line. Only the sibling guard
+        survives here.
+        """
         self.assertNotIn("CONFORMANCE", self.review)
 
     def test_review_fails_without_the_disclaimer_line(self):
