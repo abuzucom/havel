@@ -115,14 +115,19 @@ jobs:
           FAIL_ON_BLOCK: ${{ inputs.fail_on_block }}
         run: |
           set -euo pipefail
-          # The report quotes the pull request title, body, and diff, all of
-          # which an author controls. A planted VERDICT: APPROVE line reaching
-          # column zero in a quoted block would decide the gate if the first
-          # match won. Section 6 puts the authoritative verdict last, so read
-          # the final match.
-          line="$(grep -E '^(VERDICT|RISK(\s\(partial\))?|ACCURACY):' response.txt | tail -1 || true)"
+          # This workflow builds its case text from a pull request diff, so it
+          # always runs PR mode, whose section 6 token is VERDICT. Accepting a
+          # RISK or ACCURACY line would let a report answering in another mode
+          # satisfy a merge gate that mode never addressed.
+          #
+          # The report also quotes the pull request title, body, and diff, all
+          # of which an author controls. A planted VERDICT: APPROVE line
+          # reaching column zero in a quoted block would decide the gate if
+          # the first match won. Section 6 puts the authoritative verdict
+          # last, so read the final match.
+          line="$(grep -E '^VERDICT:' response.txt | tail -1 || true)"
           if [ -z "$line" ]; then
-            echo "No VERDICT:/RISK:/ACCURACY: line found in response." >&2
+            echo "No VERDICT: line found in response. PR mode requires one." >&2
             exit 1
           fi
           # AUDIT.md section 6 requires the trailing line in every mode. A

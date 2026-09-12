@@ -56,6 +56,56 @@ class VerdictLineTest(unittest.TestCase):
         self.assertIn("no VERDICT", line)
 
 
+class ModeTokenTest(unittest.TestCase):
+    """A mode accepts only the verdict token section 6 gives it.
+
+    Every mode's token is read by the same helper. Without a mode the helper
+    grades a File-mode RISK line against a PR-mode expectation, so a report
+    answering in the wrong mode passes a gate it never addressed.
+    """
+
+    def test_pr_mode_rejects_a_risk_line(self):
+        response = "\n".join(["RISK: NONE-FOUND - nothing unresolved", DISCLAIMER])
+        matched, detail = run_eval.verdict_matches(
+            "APPROVE", response, mode="PR")
+        self.assertFalse(matched)
+        self.assertIn("PR", detail)
+
+    def test_pr_mode_accepts_a_verdict_line(self):
+        response = "\n".join(["VERDICT: APPROVE - basis recorded", DISCLAIMER])
+        matched, _ = run_eval.verdict_matches("APPROVE", response, mode="PR")
+        self.assertTrue(matched)
+
+    def test_file_mode_rejects_a_verdict_line(self):
+        response = "\n".join(["VERDICT: APPROVE - basis recorded", DISCLAIMER])
+        matched, _ = run_eval.verdict_matches(
+            "NONE-FOUND", response, mode="File")
+        self.assertFalse(matched)
+
+    def test_each_mode_accepts_its_own_token(self):
+        cases = (
+            ("PR", "VERDICT: APPROVE - clean"),
+            ("File", "RISK: LOW - one hygiene finding"),
+            ("Wholesale", "RISK: MEDIUM - retention unset"),
+            ("Piece", "RISK (partial): HIGH - gate sits in an unseen caller"),
+            ("Data-map", "ACCURACY: MATCH - the notice matches the code"),
+        )
+        for mode, line in cases:
+            with self.subTest(mode=mode):
+                matched, detail = run_eval.verdict_matches(
+                    line.split(":", 1)[1].strip().split(" ")[0], line, mode=mode)
+                self.assertTrue(matched, detail)
+
+    def test_every_valid_mode_has_a_token(self):
+        for mode in run_eval.VALID_MODES:
+            with self.subTest(mode=mode):
+                self.assertIn(mode, run_eval.MODE_VERDICT_TOKENS)
+
+    def test_absent_mode_accepts_any_token(self):
+        matched, _ = run_eval.verdict_matches("MATCH", "ACCURACY: MATCH - fine")
+        self.assertTrue(matched)
+
+
 class JsonCompanionTest(unittest.TestCase):
     """The companion parses whatever follows it in the report."""
 

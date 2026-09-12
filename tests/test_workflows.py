@@ -162,6 +162,25 @@ class VerdictGateTest(unittest.TestCase):
         """
         self.assertIn("NEEDS-HUMAN", self.review)
 
+    def test_gate_reads_the_pr_mode_token_alone(self):
+        """The workflow always runs PR mode, so only VERDICT: gates it.
+
+        Accepting RISK: or ACCURACY: lets a report answering in another mode
+        satisfy a merge gate that mode never addressed.
+        """
+        step = self.review.split("name: Parse verdict", 1)[1]
+        step = step.split("name: Post PR comment", 1)[0]
+        grep_lines = [
+            line for line in step.splitlines()
+            if "grep" in line and not line.lstrip().startswith("#")
+        ]
+        self.assertTrue(grep_lines)
+        verdict_greps = [line for line in grep_lines if "VERDICT" in line]
+        self.assertEqual(len(verdict_greps), 1)
+        self.assertIn("'^VERDICT:'", verdict_greps[0])
+        self.assertNotIn("RISK", verdict_greps[0])
+        self.assertNotIn("ACCURACY", verdict_greps[0])
+
 
 if __name__ == "__main__":
     unittest.main()

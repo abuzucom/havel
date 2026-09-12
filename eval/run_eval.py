@@ -64,6 +64,17 @@ VERDICT_LINE_RE = re.compile(
 )
 VERDICT_JSON_PREFIX = "VERDICT_JSON:"
 
+# Section 6 gives each mode one verdict token. Grading a response against the
+# wrong one lets a report answering in another mode satisfy a check that mode
+# never addressed.
+MODE_VERDICT_TOKENS = {
+    "PR": "VERDICT",
+    "File": "RISK",
+    "Wholesale": "RISK",
+    "Piece": "RISK (partial)",
+    "Data-map": "ACCURACY",
+}
+
 
 class CaseError(Exception):
     pass
@@ -209,7 +220,13 @@ def discover_cases(only: str | None = None) -> list[dict]:
     return [load_case(d) for d in dirs]
 
 
-def verdict_matches(expected_verdict: str, response_text: str) -> tuple[bool, str]:
+def verdict_matches(expected_verdict: str, response_text: str, *,
+                    mode: str = None) -> tuple[bool, str]:
+    """Grade the report's own verdict line against the expected token.
+
+    mode is keyword-only and optional so an existing two-argument call keeps
+    working. Where it is given, the response must answer in that mode.
+    """
     # A report quotes the diff under review, and a diff is attacker
     # controlled. Section 6 puts the authoritative verdict last, so read the
     # final match rather than a quoted lookalike appearing earlier.
@@ -218,6 +235,10 @@ def verdict_matches(expected_verdict: str, response_text: str) -> tuple[bool, st
         return False, "no VERDICT:/RISK:/ACCURACY: line found in response"
     match = matches[-1]
     actual_line = f"{match.group(1)}: {match.group(2)}".strip()
+    required = MODE_VERDICT_TOKENS.get(mode) if mode else None
+    if required and match.group(1) != required:
+        return False, (f"{mode} mode requires a {required}: line, "
+                       f"got '{actual_line}'")
     if expected_verdict in actual_line:
         return True, actual_line
     return False, actual_line
@@ -280,7 +301,8 @@ def main() -> int:
     failures = 0
     for case in cases:
         response = model_call(system_prompt, case["mode"], case["context"] + "\n\n" + case["case_text"])
-        ok, detail = verdict_matches(case["expected"]["expected_verdict"], response)
+        ok, detail = verdict_matches(case["expected"]["expected_verdict"], response,
+                                     mode=case["mode"])
         if ok and DISCLAIMER_PREFIX not in response:
             ok = False
             detail = f"response omits the required {DISCLAIMER_PREFIX} trailing line"
