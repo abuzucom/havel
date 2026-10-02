@@ -19,9 +19,15 @@ Two modes:
                      change for adoption. Not a pass/fail gate; a nonzero
                      exit means "there is something to review," not "broken."
 
+  --write-manifest   with --files and --agents-commit, record a new subset.
+                     With neither, re-hash the tracked files and keep the pin,
+                     after a deliberate local fork recorded in
+                     docs/template-drift.md.
+
 Usage:
     python scripts/check_upstream_drift.py --check-local
     python scripts/check_upstream_drift.py --check-upstream --agents-path /path/to/agents/checkout
+    python scripts/check_upstream_drift.py --write-manifest
 """
 
 from __future__ import annotations
@@ -106,8 +112,24 @@ def write_manifest(files: list[str], agents_commit: str) -> None:
         "agents_commit": agents_commit,
         "files": {rel: normalized_sha256(REPO_ROOT / rel) for rel in sorted(files)},
     }
+    _store_manifest(manifest)
+
+
+def refreshed_manifest(manifest: dict, root: Path = REPO_ROOT) -> dict:
+    """Return a copy re-hashing every tracked file and keeping the upstream pin.
+
+    A deliberate local fork of a tracked file changes its hash while the pin
+    still names the commit the rest of the subset came from.
+    """
+    files = {rel: normalized_sha256(root / rel) for rel in sorted(manifest["files"])}
+    return {**manifest, "files": files}
+
+
+def _store_manifest(manifest: dict) -> None:
+    """Write the manifest in its canonical form."""
     MANIFEST_PATH.write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(f"wrote {MANIFEST_PATH} ({len(files)} files, pinned at {agents_commit})")
+    print(f"wrote {MANIFEST_PATH} ({len(manifest['files'])} files, "
+          f"pinned at {manifest['agents_commit']})")
 
 
 def main() -> int:
@@ -122,8 +144,17 @@ def main() -> int:
     args = parser.parse_args()
 
     if args.write_manifest:
+        if not args.files and not args.agents_commit:
+            try:
+                _store_manifest(refreshed_manifest(load_manifest()))
+            except OSError as error:
+                print(f"error: cannot re-hash a tracked file ({error}). "
+                      "Restore the file or remove it from the manifest.", file=sys.stderr)
+                return 1
+            return 0
         if not args.files or not args.agents_commit:
-            print("error: --write-manifest requires --files and --agents-commit", file=sys.stderr)
+            print("error: --write-manifest requires both --files and --agents-commit, "
+                  "or neither to re-hash the tracked files", file=sys.stderr)
             return 1
         write_manifest(args.files, args.agents_commit)
         return 0
