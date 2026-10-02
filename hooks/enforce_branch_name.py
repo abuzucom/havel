@@ -271,7 +271,10 @@ def _metadata_relative_path(path: str, project_dir: str = "", roots: tuple = ())
 def _metadata_path(path: str, project_dir: str = "", roots: tuple = ()) -> bool:
     """Match protected administration entries after path resolution."""
     relative = _metadata_relative_path(path, project_dir, roots)
-    return (relative in (".git", "head", "packed-refs", "commondir", "refs", "refs/heads", "worktrees")
+    # Havel fork: config joins the protected set. A written exec-capable key
+    # turns every admitted git call into an arbitrary program.
+    return (relative in (".git", "head", "packed-refs", "commondir", "refs", "refs/heads", "worktrees",
+                         "config", "config.worktree")
             or relative.startswith(("refs/heads/", "worktrees/")))
 
 
@@ -562,11 +565,41 @@ def _segment_execution_reason(segment: list, project_dir: str, roots: tuple = ()
            or _metadata_copy_ancestor(program, target, project_dir, roots) for target in targets):
         return "Git metadata write has unresolved reference content"
     if program == "git":
+        reason = _repository_exec_key_reason(executable[1:], project_dir, assignments)
+        if reason:
+            return reason
         context = core.git_branch_context(executable[1:], project_dir, assignments)
         return _git_context_reason(context, project_dir)
     if any(core.is_ambiguous(token) for token in executable):
         return "Command arguments contain unresolved expansion"
     return ""
+
+
+def _repository_exec_key_reason(arguments: list, project_dir: str, assignments: list) -> str:
+    """Deny git when repository or invocation config names a program git runs.
+
+    Havel fork. Reads repository and environment-named config files only.
+    The user's global file stays out of scope, so a global core.editor never
+    locks out git. `git config` itself runs no configured program except the
+    editor, so it stays reachable to remove a flagged key.
+    """
+    subcommand, rest = core.git_subcommand(arguments)
+    if subcommand == "config" and not any(token in ("-e", "--edit") for token in rest):
+        return ""
+    environment = core._git_environment(assignments)
+    state, _reason = core._git_global_state(arguments, project_dir, environment)
+    if state is None:
+        # git_branch_context reports the unresolved invocation itself.
+        return ""
+    assigned_names = {name for name, _value in assignments}
+    entries, _settings, reason = core._effective_git_entries(state, environment, assigned_names)
+    if entries is None:
+        return f"Git configuration could not be inspected: {core.sanitize(reason)}"
+    key = core._exec_capable_key(entries)
+    if not key:
+        return ""
+    return (f"Git configuration sets {core.sanitize(key)}, which names a program git runs. "
+            f"Remove it with git config --unset {core.sanitize(key)}.")
 
 
 def command_execution_reason(command: str, project_dir: str, tool_name: str) -> str:

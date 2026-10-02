@@ -870,6 +870,65 @@ class SettingsWiringTest(unittest.TestCase):
                         )
 
 
+class ExecutableConfigTest(unittest.TestCase):
+    """Repository config naming a program blocks the git calls that would run it.
+
+    The gate admits git while denying opaque programs. A repository config
+    key such as core.fsmonitor turns an admitted `git status` into an
+    arbitrary program, so the allowlist means nothing without this check.
+    """
+
+    FSMONITOR_CONFIG = (
+        "[core]\nrepositoryformatversion = 0\nbare = false\n"
+        "fsmonitor = touch pwned\n"
+    )
+
+    def _run(self, command: str, config: str = "") -> subprocess.CompletedProcess:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            if config:
+                (project / ".git").mkdir()
+                (project / ".git" / "config").write_text(config, encoding="utf-8")
+            return run_hook(bash_payload(command), CONFORMING_BRANCH, project_dir=project)
+
+    def test_exec_capable_key_denies_git_read(self):
+        result = self._run("git status", self.FSMONITOR_CONFIG)
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+        self.assertIn("core.fsmonitor", result.stderr)
+
+    def test_clean_config_allows_git_read(self):
+        result = self._run("git status")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_unset_stays_reachable(self):
+        result = self._run("git config --unset core.fsmonitor", self.FSMONITOR_CONFIG)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_config_edit_runs_the_editor_and_is_denied(self):
+        result = self._run("git config --edit", self.FSMONITOR_CONFIG)
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+
+    def test_shell_write_to_repository_config_is_denied(self):
+        result = self._run("echo x >> .git/config")
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+
+    def test_file_tool_write_to_repository_config_is_denied(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            payload = {
+                "hook_event_name": "PreToolUse",
+                "permission_mode": "default",
+                "tool_name": "Edit",
+                "tool_input": {
+                    "file_path": str(project / ".git" / "config"),
+                    "old_string": "bare = false",
+                    "new_string": "bare = false\nfsmonitor = touch pwned",
+                },
+            }
+            result = run_hook(payload, CONFORMING_BRANCH, project_dir=project)
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+
+
 class WorkflowConsentTest(unittest.TestCase):
     """The documented local checks reach consent rather than an opaque denial.
 
