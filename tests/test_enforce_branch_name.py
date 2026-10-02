@@ -864,5 +864,62 @@ class SettingsWiringTest(unittest.TestCase):
                         )
 
 
+class WorkflowConsentTest(unittest.TestCase):
+    """The documented local checks reach consent rather than an opaque denial.
+
+    CONTRIBUTING.md and AGENTS.md name the commands a change must pass before
+    review. A gate denying them outright leaves the required workflow
+    unrunnable.
+    """
+
+    def _consent(self, command: str) -> bool:
+        return hook._workflow_needs_consent(command, str(REPO_ROOT))
+
+    def test_documented_checks_request_consent(self):
+        for command in (
+                "python -m unittest discover -s tests",
+                "python3 -m unittest discover -s tests",
+                "python scripts/build_bundle.py",
+                "python scripts/build_bundle.py --check",
+                "python scripts/check_regime_refs.py",
+                "python scripts/check_regime_refs.py --write-matrix",
+                "python eval/run_eval.py",
+                "python scripts/check_upstream_drift.py --check-local",
+                "python scripts/check_upstream_drift.py --write-manifest"):
+            with self.subTest(command=command):
+                self.assertTrue(self._consent(command))
+
+    def test_prose_checkers_over_markdown_request_consent(self):
+        for checker in ("check_ascii", "lint_style", "check_us_spelling",
+                        "check_english_only", "check_hedging"):
+            command = f"python3 scripts/{checker}.py AGENTS.md docs/regimes/gdpr.md"
+            with self.subTest(command=command):
+                self.assertTrue(self._consent(command))
+
+    def test_prose_checker_rejects_non_markdown_operands(self):
+        for operand in ("scripts/lint_style.py", "../outside.md",
+                        "docs/absent.md", "--fix"):
+            command = f"python3 scripts/lint_style.py AGENTS.md {operand}"
+            with self.subTest(operand=operand):
+                self.assertFalse(self._consent(command))
+
+    def test_prose_checker_requires_an_operand(self):
+        self.assertFalse(self._consent("python3 scripts/lint_style.py"))
+
+    def test_absent_template_scripts_are_not_listed(self):
+        for script in ("scripts/run_tests.py", "scripts/sync.py",
+                       "scripts/check_action_pins.py"):
+            with self.subTest(script=script):
+                self.assertNotIn(script, hook.WORKFLOW_SCRIPT_ARGUMENTS)
+
+    def test_undocumented_arguments_stay_denied(self):
+        for command in (
+                "python -m unittest discover -s elsewhere",
+                "python eval/run_eval.py --model-call evil:run",
+                "python scripts/build_bundle.py /tmp"):
+            with self.subTest(command=command):
+                self.assertFalse(self._consent(command))
+
+
 if __name__ == "__main__":
     unittest.main()

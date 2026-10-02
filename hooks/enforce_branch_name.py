@@ -53,12 +53,20 @@ INSPECTABLE_PROGRAMS = frozenset({
     "touch", "tee", "cp", "mv", "set-content", "add-content", "out-file",
     "copy-item", "move-item", "copy", "move", "type", "true", "false",
 })
+# Havel fork: the commands CONTRIBUTING.md and AGENTS.md require before review.
 WORKFLOW_SCRIPT_ARGUMENTS = {
-    "scripts/run_tests.py": ((),),
     "scripts/read_git_state.py": tuple((mode,) for mode in ("branch", "status", "remote", "revision", "all")),
-    "scripts/sync.py": ((), ("--check",), ("--check-shared",), ("--write-shared",), ("--print-adoptable",)),
-    "scripts/check_action_pins.py": ((),),
+    "scripts/build_bundle.py": ((), ("--check",)),
+    "scripts/check_regime_refs.py": ((), ("--write-matrix",)),
+    "eval/run_eval.py": ((),),
+    "scripts/check_upstream_drift.py": (("--check-local",), ("--write-manifest",)),
 }
+# Prose checkers take the reviewed documents as operands, so no fixed tuple fits.
+PROSE_CHECKERS = frozenset({
+    "scripts/check_ascii.py", "scripts/lint_style.py", "scripts/check_us_spelling.py",
+    "scripts/check_english_only.py", "scripts/check_hedging.py",
+})
+UNITTEST_DISCOVERY = ["discover", "-s", "tests"]
 SEARCH_FLAGS = frozenset({
     "-n", "--line-number", "-l", "--files-with-matches", "-i", "--ignore-case",
     "-F", "--fixed-strings", "--files", "--hidden", "-g", "--glob", "-e", "--regexp", "--",
@@ -701,6 +709,8 @@ def _python_workflow(tokens: list, project_dir: str) -> bool:
     """Recognize bounded repository scripts and unittest module invocations."""
     if tokens[1:3] == ["-m", "unittest"]:
         modules = [token for token in tokens[3:] if token not in ("-v", "-q")]
+        if modules == UNITTEST_DISCOVERY:
+            return True
         return bool(modules) and all(
             token.startswith("tests.") and all(part.isidentifier() for part in token.split("."))
             for token in modules)
@@ -710,7 +720,22 @@ def _python_workflow(tokens: list, project_dir: str) -> bool:
     if tokens[1] == "scripts/trusted_gh.py" and tokens[2:3] == ["run"]:
         decision, _reason = core.forge_verdict("gh", tokens[3:], project_dir)
         return bool(tokens[3:]) and decision != "deny"
+    if tokens[1] in PROSE_CHECKERS:
+        return _markdown_operands(tokens[2:], project_dir)
     return tuple(tokens[2:]) in WORKFLOW_SCRIPT_ARGUMENTS.get(tokens[1], ())
+
+
+def _markdown_operands(operands: list, project_dir: str) -> bool:
+    """Require at least one operand, each an existing Markdown file in the project."""
+    if not operands:
+        return False
+    for operand in operands:
+        if operand.startswith("-") or not operand.endswith(".md"):
+            return False
+        path = core.resolved_under(project_dir, operand)
+        if path is None or not os.path.isfile(path):
+            return False
+    return True
 
 
 def _workflow_needs_consent(command: str, project_dir: str) -> bool:
