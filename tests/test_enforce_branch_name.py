@@ -659,7 +659,13 @@ class BlockedCommandTest(unittest.TestCase):
                 self.assertEqual(hook.blocked_command(command), [])
 
     def test_match_carries_effective_git_context(self):
-        with tempfile.TemporaryDirectory() as directory:
+        # A CI runner or cloud sandbox may export GIT_CONFIG_COUNT vectors.
+        # Those settings belong to the host, not to the command under test.
+        with patch.dict(os.environ), tempfile.TemporaryDirectory() as directory:
+            for name in [name for name in os.environ
+                         if name == "GIT_CONFIG_COUNT"
+                         or name.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_"))]:
+                del os.environ[name]
             child = Path(directory) / "child"
             child.mkdir()
             command = f"git -C {child.as_posix()} -c user.name=x commit"
