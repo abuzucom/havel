@@ -22,10 +22,20 @@ name: privacy-review
 #
 # havel ships no model credential and no provider lock-in. `model_call_command`
 # is a shell command supplied by the adopting repository: it reads the
-# system prompt from the file named by $AUDIT_PROMPT_FILE and the case text
-# (PR title, body, and diff) from the file named by $CASE_TEXT_FILE, then
-# writes the model's raw text response to stdout. Wire it to whichever
-# provider and model that repository's deployment of AUDIT.md uses.
+# system prompt from the file named by $AUDIT_PROMPT_FILE, the case text
+# (PR title, body, and diff) from the file named by $CASE_TEXT_FILE, and the
+# credential from $MODEL_API_KEY, then writes the model's raw text response
+# to stdout. Wire it to whichever provider and model that repository's
+# deployment of AUDIT.md uses.
+#
+# The command runs inside base/, a checkout of the calling repository at the
+# pull request's base commit. `python ci/call_model.py` therefore runs the
+# reviewed script on the base branch, never the copy the pull request edits.
+# The pull request sits in pr/ and supplies the diff alone: nothing writes
+# into that tree and nothing in it runs. Scratch files live in runner.temp.
+#
+# A pull request from a fork receives no secrets and a read-only token. The
+# model call then runs without MODEL_API_KEY, and the comment step is skipped.
 #
 # Set `regimes` once, from counsel's answer rather than from the appearance of
 # the codebase. The audit never infers a regime. The value reaches the prompt
@@ -57,6 +67,10 @@ on:
         required: false
         type: boolean
         default: true
+    secrets:
+      MODEL_API_KEY:
+        description: "Credential model_call_command reads from $MODEL_API_KEY. Omit it for a command needing none."
+        required: false
 
 jobs:
   review:
@@ -68,7 +82,18 @@ jobs:
       - name: Checkout pull request
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
+          # The pull request controls every file in this tree, symlinks
+          # included. Read it with git alone. Never write into it or run it.
+          path: pr
           fetch-depth: 0
+          persist-credentials: false
+
+      - name: Checkout base commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          repository: ${{ github.repository }}
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
           persist-credentials: false
 
       - name: Checkout AUDIT.md
@@ -86,6 +111,7 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           DECLARED_REGIMES: ${{ inputs.regimes }}
+          CASE_TEXT_FILE: ${{ runner.temp }}/case_text.txt
         run: |
           set -euo pipefail
           {
@@ -96,23 +122,27 @@ jobs:
             echo "$PR_BODY"
             echo
             echo "---"
-            git diff "$BASE_SHA" "$HEAD_SHA"
-          } > case_text.txt
+            git -C pr diff "$BASE_SHA" "$HEAD_SHA"
+          } > "$CASE_TEXT_FILE"
 
       - name: Run model call
         id: model
+        working-directory: base
         env:
-          AUDIT_PROMPT_FILE: .havel/AUDIT.md
-          CASE_TEXT_FILE: case_text.txt
+          AUDIT_PROMPT_FILE: ${{ github.workspace }}/.havel/AUDIT.md
+          CASE_TEXT_FILE: ${{ runner.temp }}/case_text.txt
+          RESPONSE_FILE: ${{ runner.temp }}/response.txt
+          MODEL_API_KEY: ${{ secrets.MODEL_API_KEY }}
           MODEL_CALL_COMMAND: ${{ inputs.model_call_command }}
         run: |
           set -euo pipefail
-          eval "$MODEL_CALL_COMMAND" > response.txt
+          eval "$MODEL_CALL_COMMAND" > "$RESPONSE_FILE"
 
       - name: Parse verdict
         id: verdict
         env:
           FAIL_ON_BLOCK: ${{ inputs.fail_on_block }}
+          RESPONSE_FILE: ${{ runner.temp }}/response.txt
         run: |
           set -euo pipefail
           # This workflow builds its case text from a pull request diff, so it
@@ -125,7 +155,7 @@ jobs:
           # reaching column zero in a quoted block would decide the gate if
           # the first match won. Section 6 puts the authoritative verdict
           # last, so read the final match.
-          line="$(grep -E '^VERDICT:' response.txt | tail -1 || true)"
+          line="$(grep -E '^VERDICT:' "$RESPONSE_FILE" | tail -1 || true)"
           if [ -z "$line" ]; then
             echo "No VERDICT: line found in response. PR mode requires one." >&2
             exit 1
@@ -134,7 +164,7 @@ jobs:
           # deployment dropping it publishes a compliance-shaped report with
           # no disclaimer, so treat its absence as a failure rather than a
           # formatting nit.
-          if ! grep -q '^NOT LEGAL ADVICE:' response.txt; then
+          if ! grep -q '^NOT LEGAL ADVICE:' "$RESPONSE_FILE"; then
             echo "Response omits the required NOT LEGAL ADVICE: trailing line." >&2
             exit 1
           fi
@@ -180,12 +210,16 @@ jobs:
           esac
 
       - name: Post PR comment
-        if: ${{ inputs.pr_comment }}
+        # A fork pull request carries a read-only token, so the comment call
+        # would fail the job after the verdict already decided it.
+        if: ${{ inputs.pr_comment && github.event.pull_request.head.repo.full_name == github.repository }}
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        env:
+          RESPONSE_FILE: ${{ runner.temp }}/response.txt
         with:
           script: |
             const fs = require('fs');
-            const raw = fs.readFileSync('response.txt', 'utf8');
+            const raw = fs.readFileSync(process.env.RESPONSE_FILE, 'utf8');
             // The report is model output shaped by an attacker-controlled diff.
             // Fence it so markdown cannot render images, links or mentions.
             // The fence outruns the longest backtick run in the report, so a
