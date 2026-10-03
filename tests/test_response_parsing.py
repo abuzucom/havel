@@ -220,5 +220,122 @@ class JsonCompanionTest(unittest.TestCase):
         self.assertIn("did not parse", message)
 
 
+def _finding(cls: str, regime=("baseline",)) -> dict:
+    """Return one VERDICT_JSON finding carrying a class and a regime list."""
+    return {"severity": "HIGH", "class": cls, "regime": list(regime),
+            "file": "app.py", "line": 1, "title": "synthetic"}
+
+
+def _payload(findings=(), regimes=(), source="declared") -> dict:
+    """Return a VERDICT_JSON object with the given findings and scope."""
+    return {"mode": "File", "regimes": list(regimes), "regime_source": source,
+            "verdict": "HIGH", "findings": list(findings)}
+
+
+class JsonAssertionTest(unittest.TestCase):
+    """A live run grades what the report found, not its verdict token alone.
+
+    A report reaching the right verdict for the wrong class, or under a
+    regime set the declaration never named, used to pass.
+    """
+
+    EU = ["gdpr", "eprivacy", "eidas"]
+
+    def _grade(self, expected: dict, payload: dict) -> bool:
+        return run_eval.json_assertions_ok(expected, payload)[0]
+
+    def test_missing_expected_class_fails(self):
+        ok, detail = run_eval.json_assertions_ok(
+            {"expected_classes": ["2.2"]}, _payload([_finding("2.7")]))
+        self.assertFalse(ok)
+        self.assertIn("2.2", detail)
+
+    def test_extra_reported_class_passes(self):
+        self.assertTrue(self._grade(
+            {"expected_classes": ["2.2"]},
+            _payload([_finding("2.2"), _finding("2.7")])))
+
+    def test_clean_case_with_no_findings_passes(self):
+        self.assertTrue(self._grade({"expected_classes": []}, _payload()))
+
+    def test_delta_token_needs_the_slug_on_that_class(self):
+        expected = {"expected_classes": ["2.2", "2.2@gdpr"]}
+        self.assertFalse(self._grade(expected, _payload([_finding("2.2", ["ccpa"])])))
+        self.assertFalse(self._grade(
+            expected, _payload([_finding("2.2"), _finding("2.7", ["gdpr"])])))
+        self.assertTrue(self._grade(expected, _payload([_finding("2.2", ["gdpr"])])))
+
+    def test_regime_mismatch_fails(self):
+        ok, detail = run_eval.json_assertions_ok(
+            {"expected_classes": [], "expected_regimes": self.EU},
+            _payload(regimes=["ucpa"]))
+        self.assertFalse(ok)
+        self.assertIn("ucpa", detail)
+
+    def test_regime_order_does_not_matter(self):
+        self.assertTrue(self._grade(
+            {"expected_classes": [], "expected_regimes": self.EU},
+            _payload(regimes=list(reversed(self.EU)))))
+
+    def test_undeclared_case_applying_a_regime_fails(self):
+        """The elicitation and undeclared controls reject a silent regime."""
+        self.assertFalse(self._grade(
+            {"expected_classes": [], "expected_regimes": [],
+             "expected_regime_source": "undeclared"},
+            _payload(regimes=["gdpr"], source="undeclared")))
+
+    def test_regime_source_mismatch_fails(self):
+        self.assertFalse(self._grade(
+            {"expected_classes": [], "expected_regime_source": "declared"},
+            _payload(source="elicited")))
+
+    def test_absent_assertions_are_not_graded(self):
+        self.assertTrue(self._grade(
+            {"expected_classes": []}, _payload(regimes=["gdpr"], source="elicited")))
+
+    def test_malformed_payload_shapes_fail(self):
+        for payload in ({"findings": "none"}, {"findings": [], "regimes": "gdpr"},
+                        {"findings": [{"class": 2.2}]}):
+            with self.subTest(payload=payload):
+                self.assertFalse(self._grade(
+                    {"expected_classes": ["2.2"], "expected_regimes": ["gdpr"]},
+                    payload))
+
+    def test_every_corpus_fixture_accepts_its_own_ideal_report(self):
+        """No stored expectation may sit beyond what a correct report can satisfy."""
+        cases = sorted((REPO_ROOT / "eval" / "cases").glob("*/expected.json"))
+        self.assertTrue(cases)
+        for path in cases:
+            expected = json.loads(path.read_text(encoding="utf-8"))
+            findings = []
+            for token in expected["expected_classes"]:
+                cls, _, slug = token.partition("@")
+                findings.append(_finding(cls, [slug] if slug else ["baseline"]))
+            payload = _payload(findings, expected.get("expected_regimes", []),
+                               expected.get("expected_regime_source", "declared"))
+            with self.subTest(case=path.parent.name):
+                ok, detail = run_eval.json_assertions_ok(expected, payload)
+                self.assertTrue(ok, detail)
+
+
+class ParseCompanionTest(unittest.TestCase):
+    """The parsed companion feeds the grader. The boolean wrapper stays."""
+
+    def test_parsed_object_is_returned(self):
+        payload, _detail = run_eval.parse_json_companion(JsonCompanionTest.PAYLOAD)
+        self.assertEqual(payload["verdict"], "BLOCK")
+
+    def test_non_object_companion_is_rejected(self):
+        payload, detail = run_eval.parse_json_companion('VERDICT_JSON: {"a": 1} [')
+        self.assertIsNotNone(payload)
+        payload, detail = run_eval.parse_json_companion("VERDICT_JSON: [1, 2]")
+        self.assertIsNone(payload)
+        self.assertIn("no object", detail)
+
+    def test_boolean_wrapper_keeps_its_contract(self):
+        self.assertEqual(run_eval.json_companion_ok(JsonCompanionTest.PAYLOAD),
+                         (True, "VERDICT_JSON parsed"))
+
+
 if __name__ == "__main__":
     unittest.main()

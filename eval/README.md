@@ -60,14 +60,19 @@ A Data-map case pairs a declared artifact with the implementation under review.
 |---|---|
 | `mode` | PR, File, Piece, Wholesale, or Data-map |
 | `declared_scope` | Input side. A profile, a slug list, `all`, or `undeclared`. Absent means the case tests the ask branch |
-| `expected_verdict` | Substring the verdict line must contain |
-| `expected_classes` | Class numbers plus any `2.N@slug` delta tokens |
-| `expected_regimes` | Assertion side. The fully expanded slug list |
-| `expected_regime_source` | `declared`, `elicited`, or `undeclared` |
-| `expect_json` | Whether to require a parseable `VERDICT_JSON` line |
+| `expected_verdict` | The verdict token alone, the mode prefix with a token, or the prefix alone to accept any severity |
+| `expected_classes` | Class numbers plus any `2.N@slug` delta tokens. A floor on the `VERDICT_JSON` findings |
+| `expected_regimes` | Assertion side. The fully expanded slug list. Must equal the `VERDICT_JSON` regimes |
+| `expected_regime_source` | `declared`, `elicited`, or `undeclared`. Must equal the `VERDICT_JSON` regime_source |
+| `expect_json` | Whether to require and grade a parseable `VERDICT_JSON` line |
 | `notes` | Why this case expects that verdict |
 | `fixture_notes` | Required. States the personal data is synthetic |
 | `allow_non_ascii` | Set where the fixture needs non-ASCII content |
+
+A live run grades the final verdict line against `expected_verdict`. Where
+`expect_json` is set, it also grades the `VERDICT_JSON` companion. Every
+`expected_classes` token must appear among its findings. Extra findings pass.
+A `2.N@slug` token needs a `2.N` finding whose regime list names the slug.
 
 `declared_scope` reaches the prompt through a `DECLARED_SCOPE:` line at the
 head of the case text. `context.md` and every input follow inside an
@@ -108,5 +113,6 @@ one.
 A single-turn harness cannot assert the ask branch of the regime scope step.
 `call_model` offers no channel for a follow-up question.
 `elicitation-required-file` covers it on a weaker condition. The assertion
-accepts a response asking the question. It accepts a response taking the
-undeclared branch. It rejects a response applying a regime silently.
+accepts a response taking the undeclared branch. Regime grading rejects a
+response applying a regime silently. A response asking the question alone
+carries no `RISK:` line and fails.
