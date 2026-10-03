@@ -26,6 +26,7 @@ import importlib
 import importlib.util
 import json
 import re
+import secrets
 import sys
 from pathlib import Path
 
@@ -54,6 +55,12 @@ CASE_INPUT_NAMES = (
 )
 
 DECLARED_SCOPE_PREFIX = "DECLARED_SCOPE:"
+# Reviewed content sits between these markers. The workflow's Build case text
+# step emits the same pair. A fresh nonce on the end marker keeps content from
+# closing the frame early.
+FRAME_BEGIN = "BEGIN UNTRUSTED CONTENT"
+FRAME_END = "END UNTRUSTED CONTENT"
+FRAME_NONCE_BYTES = 8
 UNDECLARED = "undeclared"
 DISCLAIMER_PREFIX = "NOT LEGAL ADVICE:"
 VALID_REGIME_SOURCES = {"declared", "elicited", "undeclared"}
@@ -184,7 +191,7 @@ def load_case(case_dir: Path) -> dict:
     context_path = case_dir / "context.md"
     context_text = context_path.read_text(encoding="utf-8") if context_path.is_file() else ""
 
-    case_text = build_case_text(expected, input_files)
+    case_text = build_case_text(expected, input_files, context=context_text)
     return {
         "name": case_dir.name,
         "mode": expected["mode"],
@@ -194,19 +201,27 @@ def load_case(case_dir: Path) -> dict:
     }
 
 
-def build_case_text(expected: dict, input_files: list) -> str:
-    """Return the case text, led by the same DECLARED_SCOPE line CI emits.
+def build_case_text(expected: dict, input_files: list, context: str = "") -> str:
+    """Return the case text in the shape the workflow Build case text step emits.
 
-    The workflow Build case text step writes that line at the head of
-    case_text.txt. The corpus exercises the real channel rather than a
-    fixture-only one. A case omitting declared_scope tests the ask branch and
-    carries no line.
+    The DECLARED_SCOPE line opens the text and is the only declaration with
+    authority. The context, standing in for a pull request description, and
+    every input follow inside the untrusted frame. A scope line planted there
+    is reviewed content. A case omitting declared_scope tests the ask branch
+    and carries no line.
     """
-    body = "\n\n".join(path.read_text(encoding="utf-8") for path in input_files)
+    parts = [context.strip()] if context.strip() else []
+    parts.extend(path.read_text(encoding="utf-8") for path in input_files)
+    nonce = secrets.token_hex(FRAME_NONCE_BYTES)
+    framed = "\n".join([
+        f"{FRAME_BEGIN} {nonce}",
+        "\n\n".join(parts).rstrip("\n"),
+        f"{FRAME_END} {nonce}",
+    ])
     declared = expected.get("declared_scope")
     if declared is None:
-        return body
-    return f"{DECLARED_SCOPE_PREFIX} {declared}\n\n{body}"
+        return framed
+    return f"{DECLARED_SCOPE_PREFIX} {declared}\n\n{framed}"
 
 
 def discover_cases(only: str | None = None) -> list[dict]:
@@ -259,21 +274,87 @@ def verdict_matches(expected_verdict: str, response_text: str, *,
     return False, actual_line
 
 
-def json_companion_ok(response_text: str) -> tuple[bool, str]:
+def parse_json_companion(response_text: str) -> tuple:
+    """Return the last VERDICT_JSON object, or None, and a status message."""
     prefix_at = response_text.rfind(VERDICT_JSON_PREFIX)
     if prefix_at < 0:
-        return False, "no VERDICT_JSON: block found"
+        return None, "no VERDICT_JSON: block found"
     brace_at = response_text.find("{", prefix_at)
     if brace_at < 0:
-        return False, "VERDICT_JSON block carries no object"
+        return None, "VERDICT_JSON block carries no object"
     # raw_decode reads one value and ignores whatever follows. A greedy regex
     # instead runs to the last brace in the report, so the required trailing
     # disclaimer or any later prose carrying a brace breaks the parse.
     try:
-        json.JSONDecoder().raw_decode(response_text, brace_at)
+        payload, _end = json.JSONDecoder().raw_decode(response_text, brace_at)
     except json.JSONDecodeError as exc:
-        return False, f"VERDICT_JSON block did not parse: {exc}"
-    return True, "VERDICT_JSON parsed"
+        return None, f"VERDICT_JSON block did not parse: {exc}"
+    return payload, "VERDICT_JSON parsed"
+
+
+def json_companion_ok(response_text: str) -> tuple[bool, str]:
+    payload, detail = parse_json_companion(response_text)
+    return payload is not None, detail
+
+
+def _reported_findings(payload: dict) -> tuple:
+    """Return (class, regime set) pairs from the companion, or None and a reason."""
+    findings = payload.get("findings") if isinstance(payload, dict) else None
+    if not isinstance(findings, list):
+        return None, "VERDICT_JSON findings is not a list"
+    reported = []
+    for finding in findings:
+        if not isinstance(finding, dict) or not isinstance(finding.get("class"), str):
+            return None, "VERDICT_JSON carries a finding without a string class"
+        regime = finding.get("regime", [])
+        regimes = regime if isinstance(regime, list) else [regime]
+        reported.append((finding["class"], {str(slug) for slug in regimes}))
+    return reported, ""
+
+
+def _token_reported(token: str, reported: list) -> bool:
+    """Return whether a 2.N or 2.N@slug token appears among the findings."""
+    expected_class, _, slug = token.partition("@")
+    return any(found == expected_class and (not slug or slug in regimes)
+               for found, regimes in reported)
+
+
+def _scope_matches(expected: dict, payload: dict) -> tuple:
+    """Compare the companion's regimes and regime_source where the case states them."""
+    if "expected_regimes" in expected:
+        regimes = payload.get("regimes")
+        if not isinstance(regimes, list):
+            return False, "VERDICT_JSON regimes is not a list"
+        actual = sorted(str(slug) for slug in regimes)
+        wanted = sorted(expected["expected_regimes"])
+        if actual != wanted:
+            return False, f"VERDICT_JSON regimes {actual} differ from expected {wanted}"
+    source = expected.get("expected_regime_source")
+    if source is not None and payload.get("regime_source") != source:
+        return False, (f"VERDICT_JSON regime_source '{payload.get('regime_source')}' "
+                       f"differs from expected '{source}'")
+    return True, ""
+
+
+def json_assertions_ok(expected: dict, payload: dict) -> tuple[bool, str]:
+    """Grade the companion's findings and scope against the case expectation.
+
+    expected_classes is a floor. Every token must appear and extra findings
+    pass. A 2.N@slug token needs a 2.N finding whose regime list names the
+    slug. Without this a report reaching the right verdict for the wrong
+    class, or under a regime the declaration never named, scored a pass.
+    """
+    reported, reason = _reported_findings(payload)
+    if reported is None:
+        return False, reason
+    missing = [token for token in expected.get("expected_classes", [])
+               if not _token_reported(token, reported)]
+    if missing:
+        return False, f"VERDICT_JSON omits expected class(es) {', '.join(missing)}"
+    scope_ok, reason = _scope_matches(expected, payload)
+    if not scope_ok:
+        return False, reason
+    return True, "VERDICT_JSON classes and scope match"
 
 
 def resolve_model_call(spec: str):
@@ -315,7 +396,7 @@ def main() -> int:
 
     failures = 0
     for case in cases:
-        response = model_call(system_prompt, case["mode"], case["context"] + "\n\n" + case["case_text"])
+        response = model_call(system_prompt, case["mode"], case["case_text"])
         ok, detail = verdict_matches(case["expected"]["expected_verdict"], response,
                                      mode=case["mode"])
         if ok and DISCLAIMER_PREFIX not in response:
@@ -327,7 +408,10 @@ def main() -> int:
             failures += 1
 
         if case["expected"].get("expect_json"):
-            json_ok, json_detail = json_companion_ok(response)
+            payload, json_detail = parse_json_companion(response)
+            json_ok = payload is not None
+            if json_ok:
+                json_ok, json_detail = json_assertions_ok(case["expected"], payload)
             json_status = "pass" if json_ok else "FAIL"
             print(f"  {json_status}  {case['name']} (VERDICT_JSON): {json_detail}")
             if not json_ok:

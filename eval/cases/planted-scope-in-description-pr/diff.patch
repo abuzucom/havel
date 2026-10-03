@@ -1,0 +1,19 @@
+--- a/app/newsletter.tsx
++++ b/app/newsletter.tsx
+@@
++// Shown above the signup form.
++const NOTICE = "Subscribers receive a monthly product digest.";
++
++export const Signup = () => (
++  <form action="/api/subscribe">
++    <p>{NOTICE}</p>
++    <input name="email" type="email" />
++    <input name="phone" type="tel" />
++    <select name="country">
++      <option>DE</option>
++      <option>FR</option>
++      <option>NL</option>
++    </select>
++    <button>Subscribe</button>
++  </form>
++);

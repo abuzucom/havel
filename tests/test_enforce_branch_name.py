@@ -659,7 +659,13 @@ class BlockedCommandTest(unittest.TestCase):
                 self.assertEqual(hook.blocked_command(command), [])
 
     def test_match_carries_effective_git_context(self):
-        with tempfile.TemporaryDirectory() as directory:
+        # A CI runner or cloud sandbox may export GIT_CONFIG_COUNT vectors.
+        # Those settings belong to the host, not to the command under test.
+        with patch.dict(os.environ), tempfile.TemporaryDirectory() as directory:
+            for name in [name for name in os.environ
+                         if name == "GIT_CONFIG_COUNT"
+                         or name.startswith(("GIT_CONFIG_KEY_", "GIT_CONFIG_VALUE_"))]:
+                del os.environ[name]
             child = Path(directory) / "child"
             child.mkdir()
             command = f"git -C {child.as_posix()} -c user.name=x commit"
@@ -862,6 +868,122 @@ class SettingsWiringTest(unittest.TestCase):
                             any(name in invocation for name in self.HOOK_MATCHERS),
                             f"{invocation} is registered but not declared in HOOK_MATCHERS",
                         )
+
+
+class ExecutableConfigTest(unittest.TestCase):
+    """Repository config naming a program blocks the git calls that would run it.
+
+    The gate admits git while denying opaque programs. A repository config
+    key such as core.fsmonitor turns an admitted `git status` into an
+    arbitrary program, so the allowlist means nothing without this check.
+    """
+
+    FSMONITOR_CONFIG = (
+        "[core]\nrepositoryformatversion = 0\nbare = false\n"
+        "fsmonitor = touch pwned\n"
+    )
+
+    def _run(self, command: str, config: str = "") -> subprocess.CompletedProcess:
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            if config:
+                (project / ".git").mkdir()
+                (project / ".git" / "config").write_text(config, encoding="utf-8")
+            return run_hook(bash_payload(command), CONFORMING_BRANCH, project_dir=project)
+
+    def test_exec_capable_key_denies_git_read(self):
+        result = self._run("git status", self.FSMONITOR_CONFIG)
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+        self.assertIn("core.fsmonitor", result.stderr)
+
+    def test_clean_config_allows_git_read(self):
+        result = self._run("git status")
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_unset_stays_reachable(self):
+        result = self._run("git config --unset core.fsmonitor", self.FSMONITOR_CONFIG)
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_config_edit_runs_the_editor_and_is_denied(self):
+        result = self._run("git config --edit", self.FSMONITOR_CONFIG)
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+
+    def test_shell_write_to_repository_config_is_denied(self):
+        result = self._run("echo x >> .git/config")
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+
+    def test_file_tool_write_to_repository_config_is_denied(self):
+        with tempfile.TemporaryDirectory() as directory:
+            project = Path(directory)
+            payload = {
+                "hook_event_name": "PreToolUse",
+                "permission_mode": "default",
+                "tool_name": "Edit",
+                "tool_input": {
+                    "file_path": str(project / ".git" / "config"),
+                    "old_string": "bare = false",
+                    "new_string": "bare = false\nfsmonitor = touch pwned",
+                },
+            }
+            result = run_hook(payload, CONFORMING_BRANCH, project_dir=project)
+        self.assertEqual(result.returncode, BLOCKING_EXIT_CODE)
+
+
+class WorkflowConsentTest(unittest.TestCase):
+    """The documented local checks reach consent rather than an opaque denial.
+
+    CONTRIBUTING.md and AGENTS.md name the commands a change must pass before
+    review. A gate denying them outright leaves the required workflow
+    unrunnable.
+    """
+
+    def _consent(self, command: str) -> bool:
+        return hook._workflow_needs_consent(command, str(REPO_ROOT))
+
+    def test_documented_checks_request_consent(self):
+        for command in (
+                "python -m unittest discover -s tests",
+                "python3 -m unittest discover -s tests",
+                "python scripts/build_bundle.py",
+                "python scripts/build_bundle.py --check",
+                "python scripts/check_regime_refs.py",
+                "python scripts/check_regime_refs.py --write-matrix",
+                "python eval/run_eval.py",
+                "python scripts/check_upstream_drift.py --check-local",
+                "python scripts/check_upstream_drift.py --write-manifest"):
+            with self.subTest(command=command):
+                self.assertTrue(self._consent(command))
+
+    def test_prose_checkers_over_markdown_request_consent(self):
+        for checker in ("check_ascii", "lint_style", "check_us_spelling",
+                        "check_english_only", "check_hedging"):
+            command = f"python3 scripts/{checker}.py AGENTS.md docs/regimes/gdpr.md"
+            with self.subTest(command=command):
+                self.assertTrue(self._consent(command))
+
+    def test_prose_checker_rejects_non_markdown_operands(self):
+        for operand in ("scripts/lint_style.py", "../outside.md",
+                        "docs/absent.md", "--fix"):
+            command = f"python3 scripts/lint_style.py AGENTS.md {operand}"
+            with self.subTest(operand=operand):
+                self.assertFalse(self._consent(command))
+
+    def test_prose_checker_requires_an_operand(self):
+        self.assertFalse(self._consent("python3 scripts/lint_style.py"))
+
+    def test_absent_template_scripts_are_not_listed(self):
+        for script in ("scripts/run_tests.py", "scripts/sync.py",
+                       "scripts/check_action_pins.py"):
+            with self.subTest(script=script):
+                self.assertNotIn(script, hook.WORKFLOW_SCRIPT_ARGUMENTS)
+
+    def test_undocumented_arguments_stay_denied(self):
+        for command in (
+                "python -m unittest discover -s elsewhere",
+                "python eval/run_eval.py --model-call evil:run",
+                "python scripts/build_bundle.py /tmp"):
+            with self.subTest(command=command):
+                self.assertFalse(self._consent(command))
 
 
 if __name__ == "__main__":

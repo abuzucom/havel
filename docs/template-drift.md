@@ -29,8 +29,7 @@ same commit and carries two files foucault lacks.
 - `.github/workflows/ci.yml` runs this repository's own checkers rather than
   reusing agents compliance workflows.
 - `tests/test_enforce_branch_name.py` keeps the adorno trimmed `HOOK_MATCHERS`
-  covering the two adopted hooks. `upstream-files.json` excludes that file
-  because it departs from upstream byte content deliberately.
+  covering the two adopted hooks. The local fork below also changes it.
 
 ## Not adopted
 
@@ -91,32 +90,30 @@ thresholds and investigation steps live in 23 files it cannot see.
   carries a parseable date and a non-empty sources line. It cannot verify the
   statutory reading behind either.
 
-## Known limitation in the hook command allowlist
-
-`hooks/enforce_branch_name.py` runs strict preflight for agent sessions. Its
-`WORKFLOW_SCRIPT_ARGUMENTS` allowlist names four upstream scripts. Every other
-script invocation reads as an opaque command, and the hook refuses it.
-
-None of this repository's own commands appear on that allowlist. An agent
-session with the hooks wired therefore cannot run
-`python scripts/check_regime_refs.py`, `python scripts/build_bundle.py`,
-`python eval/run_eval.py`, or the prose checkers. Human sessions and CI run
-each one normally. The hook gates agent tool calls alone.
-
-Both siblings carry the same gap. Adorno cannot run its own
-`eval/run_eval.py` under the hook either.
-
-Havel keeps the hook verbatim rather than editing the allowlist. Editing an
-inherited file creates drift against the pinned commit for a change belonging
-upstream. The fix belongs in `abuzucom/agents`. Widening the allowlist would serve.
-Reading it from repository configuration would serve as well.
-
-Until then, an agent session needing these commands moves
-`.claude/settings.json` aside for the duration, then restores it.
-
 ## True drift
 
-None recorded. This section tracks a copied file's content diverging from its
-pinned upstream commit over time. Run
-`python scripts/check_upstream_drift.py --check-local` in CI and
+This section tracks a copied file's content diverging from its pinned upstream
+commit. Run `python scripts/check_upstream_drift.py --check-local` in CI and
 `--check-upstream --agents-path <checkout>` before each release.
+
+Two files carry a deliberate local fork. A wholesale security review found
+three defects across the pair. The fixes landed here first rather than waiting
+for `abuzucom/agents`.
+
+- `hooks/enforce_branch_name.py`. The `WORKFLOW_SCRIPT_ARGUMENTS` allowlist
+  named three upstream scripts absent here. It denied every command
+  `CONTRIBUTING.md` requires. The fork lists the havel commands and admits the
+  prose checkers over existing Markdown files. Every form stays consent-gated.
+- `hooks/enforce_branch_name.py`. The gate admitted git while repository config
+  could name a program git runs. The fork protects `.git/config` and denies git
+  when repository config carries an exec-capable key. `git config` without
+  `--edit` stays reachable to remove one.
+- `tests/test_enforce_branch_name.py`. One test inherited the host's
+  `GIT_CONFIG_COUNT` vectors and failed on any runner exporting one. The fork
+  removes those variables for that test. It also adds tests for both hook
+  changes.
+
+`python scripts/check_upstream_drift.py --write-manifest` re-hashed both files
+and kept the pin. `--check-upstream` reports both as CHANGED by design. Port
+the three fixes to `abuzucom/agents`, then re-adopt the upstream files and drop
+this entry.
