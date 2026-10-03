@@ -70,8 +70,10 @@ A Data-map case pairs a declared artifact with the implementation under review.
 | `allow_non_ascii` | Set where the fixture needs non-ASCII content |
 
 `declared_scope` reaches the prompt through a `DECLARED_SCOPE:` line at the
-head of the case text. The reference workflow emits the same line. The corpus
-exercises the real channel rather than a fixture-only one.
+head of the case text. `context.md` and every input follow inside an
+`UNTRUSTED CONTENT` frame closed by a fresh nonce. The reference workflow emits
+the same line and the same frame. The corpus exercises the real channel rather
+than a fixture-only one.
 
 ## Synthetic fixtures
 
@@ -88,7 +90,7 @@ requirement and forces the reason into `fixture_notes`.
 ## Coverage policy
 
 The policy sets the case count rather than a chosen number. The corpus holds
-103 cases.
+104 cases.
 
 - Every class 2.1 through 2.29 carries at least one behavioral case.
 - Every hard blocker carries at least one case.

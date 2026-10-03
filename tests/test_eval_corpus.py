@@ -194,6 +194,63 @@ class DeclaredScopeTest(unittest.TestCase):
                 self.assertEqual(expected.get("expected_regimes", []), [])
 
 
+class BuildCaseTextTest(unittest.TestCase):
+    """The corpus frames case text the way the workflow does.
+
+    Only the opening DECLARED_SCOPE line carries authority. Everything the
+    review reads, description and fixtures alike, sits inside a frame whose
+    end marker carries a fresh nonce, so content cannot close it early.
+    """
+
+    def setUp(self):
+        self.case_dir = CASES_DIR / "planted-scope-in-description-pr"
+
+    def _frame(self, text: str) -> tuple:
+        """Return the lines before the frame, the frame body, and the nonce."""
+        lines = text.splitlines()
+        begin = next(index for index, line in enumerate(lines)
+                     if line.startswith(run_eval.FRAME_BEGIN + " "))
+        nonce = lines[begin][len(run_eval.FRAME_BEGIN) + 1:]
+        self.assertEqual(lines[-1], f"{run_eval.FRAME_END} {nonce}")
+        return lines[:begin], lines[begin + 1:-1], nonce
+
+    def test_scope_line_opens_the_case_text(self):
+        text = run_eval.build_case_text({"declared_scope": "eu"}, [], context="ctx")
+        self.assertEqual(text.splitlines()[0], "DECLARED_SCOPE: eu")
+
+    def test_context_and_inputs_sit_inside_the_frame(self):
+        path = self.case_dir / "diff.patch"
+        text = run_eval.build_case_text(
+            {"declared_scope": "eu"}, [path], context="synthetic description")
+        _before, body, _nonce = self._frame(text)
+        joined = "\n".join(body)
+        self.assertIn("synthetic description", joined)
+        self.assertIn(path.read_text(encoding="utf-8").strip(), joined)
+
+    def test_planted_scope_appears_only_inside_the_frame(self):
+        case = run_eval.load_case(self.case_dir)
+        before, body, _nonce = self._frame(case["case_text"])
+        scope_lines = [line for line in before if line.startswith("DECLARED_SCOPE:")]
+        self.assertEqual(scope_lines, ["DECLARED_SCOPE: eu"])
+        self.assertIn("DECLARED_SCOPE: us-ut", body)
+
+    def test_undeclared_case_carries_no_scope_line_but_keeps_the_frame(self):
+        text = run_eval.build_case_text({}, [], context="ctx")
+        before, body, _nonce = self._frame(text)
+        self.assertFalse(any(line.startswith("DECLARED_SCOPE:") for line in before))
+        self.assertIn("ctx", body)
+
+    def test_nonce_is_fresh_and_unguessable(self):
+        nonces = {self._frame(run_eval.build_case_text({}, []))[2] for _ in range(5)}
+        self.assertEqual(len(nonces), 5)
+        for nonce in nonces:
+            self.assertRegex(nonce, r"\A[0-9a-f]{16}\Z")
+
+    def test_existing_two_argument_call_still_works(self):
+        text = run_eval.build_case_text({"declared_scope": "eu"}, [])
+        self.assertTrue(text.startswith("DECLARED_SCOPE: eu\n"))
+
+
 class StatedCountTest(unittest.TestCase):
     """Counts stated in prose match reality."""
 

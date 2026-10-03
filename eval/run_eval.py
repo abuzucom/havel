@@ -26,6 +26,7 @@ import importlib
 import importlib.util
 import json
 import re
+import secrets
 import sys
 from pathlib import Path
 
@@ -54,6 +55,12 @@ CASE_INPUT_NAMES = (
 )
 
 DECLARED_SCOPE_PREFIX = "DECLARED_SCOPE:"
+# Reviewed content sits between these markers. The workflow's Build case text
+# step emits the same pair. A fresh nonce on the end marker keeps content from
+# closing the frame early.
+FRAME_BEGIN = "BEGIN UNTRUSTED CONTENT"
+FRAME_END = "END UNTRUSTED CONTENT"
+FRAME_NONCE_BYTES = 8
 UNDECLARED = "undeclared"
 DISCLAIMER_PREFIX = "NOT LEGAL ADVICE:"
 VALID_REGIME_SOURCES = {"declared", "elicited", "undeclared"}
@@ -184,7 +191,7 @@ def load_case(case_dir: Path) -> dict:
     context_path = case_dir / "context.md"
     context_text = context_path.read_text(encoding="utf-8") if context_path.is_file() else ""
 
-    case_text = build_case_text(expected, input_files)
+    case_text = build_case_text(expected, input_files, context=context_text)
     return {
         "name": case_dir.name,
         "mode": expected["mode"],
@@ -194,19 +201,27 @@ def load_case(case_dir: Path) -> dict:
     }
 
 
-def build_case_text(expected: dict, input_files: list) -> str:
-    """Return the case text, led by the same DECLARED_SCOPE line CI emits.
+def build_case_text(expected: dict, input_files: list, context: str = "") -> str:
+    """Return the case text in the shape the workflow Build case text step emits.
 
-    The workflow Build case text step writes that line at the head of
-    case_text.txt. The corpus exercises the real channel rather than a
-    fixture-only one. A case omitting declared_scope tests the ask branch and
-    carries no line.
+    The DECLARED_SCOPE line opens the text and is the only declaration with
+    authority. The context, standing in for a pull request description, and
+    every input follow inside the untrusted frame. A scope line planted there
+    is reviewed content. A case omitting declared_scope tests the ask branch
+    and carries no line.
     """
-    body = "\n\n".join(path.read_text(encoding="utf-8") for path in input_files)
+    parts = [context.strip()] if context.strip() else []
+    parts.extend(path.read_text(encoding="utf-8") for path in input_files)
+    nonce = secrets.token_hex(FRAME_NONCE_BYTES)
+    framed = "\n".join([
+        f"{FRAME_BEGIN} {nonce}",
+        "\n\n".join(parts).rstrip("\n"),
+        f"{FRAME_END} {nonce}",
+    ])
     declared = expected.get("declared_scope")
     if declared is None:
-        return body
-    return f"{DECLARED_SCOPE_PREFIX} {declared}\n\n{body}"
+        return framed
+    return f"{DECLARED_SCOPE_PREFIX} {declared}\n\n{framed}"
 
 
 def discover_cases(only: str | None = None) -> list[dict]:
@@ -315,7 +330,7 @@ def main() -> int:
 
     failures = 0
     for case in cases:
-        response = model_call(system_prompt, case["mode"], case["context"] + "\n\n" + case["case_text"])
+        response = model_call(system_prompt, case["mode"], case["case_text"])
         ok, detail = verdict_matches(case["expected"]["expected_verdict"], response,
                                      mode=case["mode"])
         if ok and DISCLAIMER_PREFIX not in response:

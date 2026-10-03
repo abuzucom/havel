@@ -29,7 +29,7 @@ deployment.
   repo-agnostic bundle builder with a `--check` mode detecting stale output.
 - `scripts/check_regime_refs.py`: reference-graph, profile-table, and regime
   currency verification, plus matrix generation.
-- `eval/`: a model-agnostic golden-corpus harness and 103 fixtures. Coverage
+- `eval/`: a model-agnostic golden-corpus harness and 104 fixtures. Coverage
   runs one case per class, one per hard blocker, one per mode, one per
   verdict-affecting regime delta, and 15 negative controls.
 - `docs/scope-boundary.md`: every exclusion with a named destination.

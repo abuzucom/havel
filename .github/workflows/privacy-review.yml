@@ -114,15 +114,18 @@ jobs:
           CASE_TEXT_FILE: ${{ runner.temp }}/case_text.txt
         run: |
           set -euo pipefail
+          # Only the opening DECLARED_SCOPE line carries authority. Everything
+          # the author controls sits inside a frame whose end marker carries a
+          # fresh nonce, so a planted scope line or end marker stays inside.
+          # eval/run_eval.py emits the same frame for the corpus.
+          nonce="$(od -An -N8 -tx1 /dev/urandom | tr -d ' \n')"
           {
             echo "DECLARED_SCOPE: $DECLARED_REGIMES"
             echo
-            echo "Title: $PR_TITLE"
-            echo
-            echo "$PR_BODY"
-            echo
-            echo "---"
+            echo "BEGIN UNTRUSTED CONTENT $nonce"
+            printf 'Title: %s\n\n%s\n\n---\n' "$PR_TITLE" "$PR_BODY"
             git -C pr diff "$BASE_SHA" "$HEAD_SHA"
+            echo "END UNTRUSTED CONTENT $nonce"
           } > "$CASE_TEXT_FILE"
 
       - name: Run model call
